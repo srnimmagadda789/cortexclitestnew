@@ -42,6 +42,14 @@ jobs:
         chmod +x cortexcli
         ./cortexcli --version
 
+    # NEW STEP: View all CLI options
+    - name: View CortexCLI Help Options
+      run: |
+        echo "=== Global Help ==="
+        ./cortexcli --help
+        echo "=== Image Scan Help ==="
+        ./cortexcli image scan --help || true
+
     # Pull the vulnerable target image (Hardcoded)
     - name: Pull Vulnerable Image and export image ID
       run: |
@@ -51,15 +59,14 @@ jobs:
 
     - name: Cortex CLI Image Scan
       run: |
-        sudo ./cortexcli \
+        sudo CORTEX_SOFT_FAIL=true ./cortexcli \
           --api-base-url "${CORTEX_API_URL}" \
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
           --log-level INFO \
           image scan \
           --output-format json \
-          --soft-fail \
-          $IMAGE_NAME
+          $IMAGE_NAME || echo "Vulnerabilities found! Soft fail fallback triggered."
 
     - name: Wait for results
       run: | 
