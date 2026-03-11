@@ -17,7 +17,7 @@ jobs:
       CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
       CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
       WAIT: ${{ vars.WAIT || 900 }}
-      IMAGE_NAME: "python:3.7"
+      IMAGE_NAME: "nginx:latest"
       OUTPUT_FILE: ${{ vars.OUTPUT_FILE || 'scan-results.json' }}
 
     steps:
@@ -53,8 +53,8 @@ jobs:
     # Pull the vulnerable target image (Hardcoded)
     - name: Pull Vulnerable Image and export image ID
       run: |
-        docker pull python:3.7
-        image_id=$(docker inspect python:3.7 --format='{{.Id}}')
+        docker pull nginx:latest
+        image_id=$(docker inspect nginx:latest --format='{{.Id}}')
         echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
 
     # Note the global flags (including --soft-fail) are placed BEFORE 'image scan'
