@@ -17,22 +17,13 @@ jobs:
       CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
       CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
       WAIT: ${{ vars.WAIT || 900 }}
-      IMAGE_NAME: "alpine:latest"
+      IMAGE_NAME: "${{ vars.IMAGE_NAME }}:latest"
       OUTPUT_FILE: ${{ vars.OUTPUT_FILE || 'scan-results.json' }}
 
     steps:
+    # Initial Setup
     - name: Checkout
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5
-
-    # Install Pre-requisites
-    - name: Install Prerequisites
-      run: |
-        sudo apt-get update
-        # curl and jq are required for the download step and JSON parsing
-        # libhyperscan5 is required for the AppSec module on Ubuntu AMD64
-        sudo apt-get install -y curl jq libhyperscan5
-        # prefetch is noted specifically for Ubuntu 20
-        sudo apt-get install -y prefetch || echo "Prefetch utility not found or not required on this Ubuntu version."
 
     - name: Download cortexcli
       run: |
@@ -41,33 +32,75 @@ jobs:
         curl -o cortexcli $crtx_url
         chmod +x cortexcli
         ./cortexcli --version
+        
+    # Do AppSec Code Scanning
+    - name: Set up Node.js
+      uses: actions/setup-node@d7a11313b581b306c961b506cfc8971208bb03f6
+      with:
+        node-version: 22
 
-    # View all CLI options for troubleshooting
-    - name: View CortexCLI Help Options
+    - name: Verify Node.js Version
+      run: node -v
+      
+    - name: Run Cortex CLI Code Scan
       run: |
-        echo "=== Global Help ==="
-        ./cortexcli --help
-        echo "=== Image Scan Help ==="
-        ./cortexcli image scan --help || true
-
-    # Pull the vulnerable target image (Hardcoded)
-    - name: Pull Vulnerable Image and export image ID
-      run: |
-        docker pull alpine:latest
-        image_id=$(docker inspect alpine:latest --format='{{.Id}}')
-        echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
-
-    # Note the global flags (including --soft-fail) are placed BEFORE 'image scan'
-    - name: Cortex CLI Image Scan
-      run: |
-        sudo ./cortexcli \
+        ./cortexcli \
           --api-base-url "${CORTEX_API_URL}" \
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
-          --log-level INFO \
+          code scan \
+          --directory "${{github.workspace}}" \
+          --repo-id "${{github.repository}}" \
+          --branch "${{github.ref_name}}" \
+          --source "GITHUB_ACTIONS" \
+          --create-repo-if-missing \
+          --output json \
+          --output-file-path "appsec-${{ env.OUTPUT_FILE }}"
+    
+    - uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
+      with:
+        name: appsec-scan-results
+        path: "appsec-${{ env.OUTPUT_FILE }}"
+  
+    # Do CWP image scanning
+    - name: CWP Image Scan Dependency
+      run: sudo apt install libhyperscan5 jq -y
+      
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
+
+    - name: Build Image and export image ID
+      run: |
+        docker build -t $IMAGE_NAME .
+        image_id=$(docker inspect $IMAGE_NAME --format='{{.Id}}')
+        echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
+
+        
+    - name: Cortex CLI Image Scan
+      run: |
+        results=$(sudo ./cortexcli \
+          --api-base-url "${CORTEX_API_URL}" \
+          --api-key "${CORTEX_API_KEY}" \
+          --api-key-id "${CORTEX_API_KEY_ID}" \
+          --soft-fail \
           image scan \
+          --timeout 600 \
+          --name $IMAGE_NAME \
           --output-format json \
-          purple-broccoli
+          $IMAGE_NAME)
+        image_id="$(echo $results | grep -oP '(?<="image_id":")[^"]*')"
+
+        if [[ -z "$image_id" ]]; then
+            echo "❌ Failed to get results from CortexCLI"
+            cat $HOME/.cortexcli/logs/cortexcli-*.log | grep "ERROR" || echo "No error found"
+            exit 1
+        fi
+        echo "CortexCLI scan completed successfully. Image ID: ${image_id}"
+        echo "$results" | jq '.'
+        echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
 
     - name: Wait for results
       run: | 
@@ -92,6 +125,7 @@ jobs:
         fi
 
         echo "XQL Query started successfully. Query ID: ${query_id}"
+
 
         # Define initial status
         echo "Retrieving results for Query ID: ${query_id}. Waiting for completion (pending_flag=true)..."
