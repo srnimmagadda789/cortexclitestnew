@@ -1,11 +1,11 @@
-name: Image Scan CortexCLI
+name: Code Repo CortexCLI
 
 permissions: {}
 
 on:
   push:
     branches:
-      - cortex-cli
+      - cortex-cli-arc
   workflow_dispatch:
     
 jobs:
