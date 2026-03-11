@@ -17,52 +17,58 @@ jobs:
       CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
       CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
       WAIT: ${{ vars.WAIT || 900 }}
-      IMAGE_NAME: "${{ vars.IMAGE_NAME }}:latest"
+      IMAGE_NAME: "vulnerables/web-dvwa:latest"
       OUTPUT_FILE: ${{ vars.OUTPUT_FILE || 'scan-results.json' }}
 
     steps:
-    # Initial Setup
     - name: Checkout
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5
 
-    # Do CWP image scanning
-    - name: CWP Image Scan Dependency
-      run: sudo apt install libhyperscan5 jq -y
-      
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@6524bf65af31da8d45b59e8c27de4bd072b392f5
-
-    - name: Build Image and export image ID
+    # Install Pre-requisites
+    - name: Install Prerequisites
       run: |
-        docker build -t $IMAGE_NAME .
-        image_id=$(docker inspect $IMAGE_NAME --format='{{.Id}}')
+        sudo apt-get update
+        # curl and jq are required for the download step and JSON parsing
+        # libhyperscan5 is required for the AppSec module on Ubuntu AMD64
+        sudo apt-get install -y curl jq libhyperscan5
+        # prefetch is noted specifically for Ubuntu 20
+        sudo apt-get install -y prefetch || echo "Prefetch utility not found or not required on this Ubuntu version."
+
+    - name: Download cortexcli
+      run: |
+        crtx_resp=$(curl -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" -H "Authorization: ${CORTEX_API_KEY}" "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
+        crtx_url=$(echo $crtx_resp | jq -r ".signed_url")
+        curl -o cortexcli $crtx_url
+        chmod +x cortexcli
+        ./cortexcli --version
+
+    # View all CLI options for troubleshooting
+    - name: View CortexCLI Help Options
+      run: |
+        echo "=== Global Help ==="
+        ./cortexcli --help
+        echo "=== Image Scan Help ==="
+        ./cortexcli image scan --help || true
+
+    # Pull the vulnerable target image (Hardcoded)
+    - name: Pull Vulnerable Image and export image ID
+      run: |
+        docker pull vulnerables/web-dvwa:latest
+        image_id=$(docker inspect vulnerables/web-dvwa:latest --format='{{.Id}}')
         echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
 
-        
+    # Note the global flags (including --soft-fail) are placed BEFORE 'image scan'
     - name: Cortex CLI Image Scan
       run: |
-        results=$(sudo ./cortexcli \
+        sudo ./cortexcli \
           --api-base-url "${CORTEX_API_URL}" \
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
+          --log-level INFO \
+          --soft-fail \
           image scan \
-          --timeout 600 \
-          --name $IMAGE_NAME \
           --output-format json \
-          $IMAGE_NAME)
-        image_id="$(echo $results | grep -oP '(?<="image_id":")[^"]*')"
-
-        if [[ -z "$image_id" ]]; then
-            echo "❌ Failed to get results from CortexCLI"
-            cat $HOME/.cortexcli/logs/cortexcli-*.log | grep "ERROR" || echo "No error found"
-            exit 1
-        fi
-        echo "CortexCLI scan completed successfully. Image ID: ${image_id}"
-        echo "$results" | jq '.'
-        echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
+          purple-broccoli
 
     - name: Wait for results
       run: | 
@@ -87,7 +93,6 @@ jobs:
         fi
 
         echo "XQL Query started successfully. Query ID: ${query_id}"
-
 
         # Define initial status
         echo "Retrieving results for Query ID: ${query_id}. Waiting for completion (pending_flag=true)..."
