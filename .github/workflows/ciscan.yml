@@ -51,9 +51,9 @@ jobs:
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
           --log-level INFO \
-          --name $IMAGE_NAME \
+          image scan \
           --output-format json \
-           image scan $IMAGE_NAME
+          $IMAGE_NAME
 
     # - name: Wait for results
     #   run: | 
