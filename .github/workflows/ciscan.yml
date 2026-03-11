@@ -10,7 +10,7 @@ on:
     
 jobs:
   cortexcli:
-    runs-on: linux-latest
+    runs-on: ubuntu-22.04
     environment: Cortex
     env:
       CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
