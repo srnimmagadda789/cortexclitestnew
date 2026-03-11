@@ -50,8 +50,8 @@ jobs:
           --api-base-url "${CORTEX_API_URL}" \
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
-          --log-level INFO \
-          --timeout 600 \
+          --log-level "INFO" \
+          --timeout "600" \
           --name $IMAGE_NAME \
           --output-format json \
            image scan $IMAGE_NAME)
