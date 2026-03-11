@@ -42,7 +42,7 @@ jobs:
         chmod +x cortexcli
         ./cortexcli --version
 
-    # NEW STEP: View all CLI options
+    # View all CLI options for troubleshooting
     - name: View CortexCLI Help Options
       run: |
         echo "=== Global Help ==="
@@ -57,16 +57,18 @@ jobs:
         image_id=$(docker inspect vulnerables/web-dvwa:latest --format='{{.Id}}')
         echo "IMAGE_ID=$image_id" >> $GITHUB_ENV
 
+    # Note the global flags (including --soft-fail) are placed BEFORE 'image scan'
     - name: Cortex CLI Image Scan
       run: |
-        sudo CORTEX_SOFT_FAIL=true ./cortexcli \
+        sudo ./cortexcli \
           --api-base-url "${CORTEX_API_URL}" \
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
           --log-level INFO \
+          --soft-fail \
           image scan \
           --output-format json \
-          $IMAGE_NAME || echo "Vulnerabilities found! Soft fail fallback triggered."
+          $IMAGE_NAME
 
     - name: Wait for results
       run: | 
@@ -91,7 +93,6 @@ jobs:
         fi
 
         echo "XQL Query started successfully. Query ID: ${query_id}"
-
 
         # Define initial status
         echo "Retrieving results for Query ID: ${query_id}. Waiting for completion (pending_flag=true)..."
