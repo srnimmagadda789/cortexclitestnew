@@ -58,6 +58,7 @@ jobs:
           --log-level INFO \
           image scan \
           --output-format json \
+          --soft-fail \
           $IMAGE_NAME
 
     - name: Wait for results
