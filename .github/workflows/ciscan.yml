@@ -68,7 +68,7 @@ jobs:
           --soft-fail \
           image scan \
           --output-format json \
-          $IMAGE_NAME
+          purple-broccoli
 
     - name: Wait for results
       run: | 
