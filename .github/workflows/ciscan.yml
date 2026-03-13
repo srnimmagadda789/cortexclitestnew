@@ -57,7 +57,7 @@ jobs:
           --api-key "${CORTEX_API_KEY}" \
           --api-key-id "${CORTEX_API_KEY_ID}" \
            --soft-fail \
-          --log-level INFO \
+          --log-level DEBUG \
           image scan \
           --timeout 600 \
           --name $IMAGE_NAME \
