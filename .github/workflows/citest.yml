@@ -64,4 +64,4 @@ jobs:
           path: |
             scan-results.json
             debug_files.txt
-            ~/.cortexcli/cortexcli-log/
+            ~/./cortexcli/cortexcli-log/
