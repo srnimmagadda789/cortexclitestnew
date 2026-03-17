@@ -29,7 +29,7 @@ jobs:
           CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
           CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
         run: |
-        sudo  ./cortexcli --api-base-url $(CORTEX_API_URL) --log-level DEBUG --api-key-id $(CORTEX_API_KEY_ID) --api-key $(CORTEX_API_KEY) image scan vulnerables/web-dvwa:latest
+         sudo  ./cortexcli --api-base-url $(CORTEX_API_URL) --log-level DEBUG --api-key-id $(CORTEX_API_KEY_ID) --api-key $(CORTEX_API_KEY) image scan vulnerables/web-dvwa:latest
 
       - name: Upload Scan Results
         uses: actions/upload-artifact@v4
