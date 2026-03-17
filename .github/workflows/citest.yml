@@ -22,18 +22,34 @@ jobs:
 
       - name: Download cortexcli
         run: |
-         crtx_resp=$(curl -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" -H "Authorization: ${CORTEX_API_KEY}" "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
-         crtx_url=$(echo $crtx_resp | jq -r ".signed_url")
-         curl -o cortexcli $crtx_url
-         chmod +x cortexcli
-         ./cortexcli --version
+          crtx_resp=$(curl -H "x-xdr-auth-id: ${CORTEX_API_KEY_ID}" -H "Authorization: ${CORTEX_API_KEY}" "${CORTEX_API_URL}/public_api/v1/unified-cli/releases/download-link?os=linux&architecture=amd64")
+          crtx_url=$(echo $crtx_resp | jq -r ".signed_url")
+          curl -L -o cortexcli "$crtx_url"
+          chmod +x cortexcli
+          ./cortexcli --version
+
+      # --- NEW DEBUG STEP ---
+      - name: Debug Cortex Path and Files
+        run: |
+          echo "--- Current Working Directory ---"
+          pwd
+          echo "--- Searching for cortexcli binary location ---"
+          find . -name "cortexcli" -type f
+          echo "--- Checking permissions and file type ---"
+          ls -la cortexcli || echo "cortexcli not found in root"
+          file cortexcli || echo "Cannot determine file type"
+          echo "--- Listing everything in the workspace for context ---"
+          ls -R . > debug_files.txt
 
       - name: Scan Image with Cortex
         run: |
-         sudo  ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" image scan vulnerables/web-dvwa:latest
+          sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" image scan vulnerables/web-dvwa:latest
 
       - name: Upload Scan Results
+        if: always() # Upload even if the scan fails
         uses: actions/upload-artifact@v4
         with:
           name: security-scan-report
-          path: scan-results.json
+          path: |
+            scan-results.json
+            debug_files.txt
