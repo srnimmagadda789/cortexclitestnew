@@ -29,7 +29,7 @@ jobs:
           ./cortexcli --version
 
       # --- NEW DEBUG STEP ---
-      - name: Debug Cortex Path and Files
+      - name: Debug Cortex Path and Files test
         run: |
          echo "Checking path: $HOME/.cortexcli/cortexcli-log/logs/"
          if [ -d "$HOME/.cortexcli/logs/" ]; then
