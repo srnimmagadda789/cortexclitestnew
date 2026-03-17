@@ -32,9 +32,9 @@ jobs:
       - name: Debug Cortex Path and Files
         run: |
          echo "Checking path: $HOME/.cortexcli/cortexcli-log/logs/"
-         if [ -d "$HOME/.cortexcli/cortexcli-log/logs/" ]; then
+         if [ -d "$HOME/.cortexcli/logs/" ]; then
             echo "✅ Log directory exists."
-            ls -la "$HOME/.cortexcli/cortexcli-log/logs/"
+            ls -la "$HOME/.cortexcli/logs/"
          else
             echo "❌ Log directory does not exist."
             # Check the parent directory to see what IS there
@@ -48,10 +48,10 @@ jobs:
         if: always()
         run: |
           echo "--- Checking for Cortex CLI logs ---"
-          if [ -d "$HOME/.cortexcli/cortexcli-log/logs/" ]; then
+          if [ -d "$HOME/.cortexcli/logs/" ]; then
             echo "Logs found! Printing all files in directory:"
             # This finds all files in the log dir and prints their contents
-            find "$HOME/.cortexcli/cortexcli-log/logs/" -type f -exec echo "FILE: {}" \; -exec cat {} \;
+            find "$HOME/.cortexcli/logs/" -type f -exec echo "FILE: {}" \; -exec cat {} \;
           else
             echo "No log directory found at ~/.cortexcli/cortexcli-log/logs/"
           fi
@@ -63,4 +63,4 @@ jobs:
           name: security-scan-report
           path: |
             scan-results.json
-            $HOME/.cortexcli/cortexcli-log/logs/
+            $HOME/.cortexcli/logs/
