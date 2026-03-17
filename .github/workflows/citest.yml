@@ -28,19 +28,6 @@ jobs:
           chmod +x cortexcli
           ./cortexcli --version
 
-      # --- NEW DEBUG STEP ---
-      - name: Debug Cortex Path and Files test
-        run: |
-         echo "Checking path: $HOME/.cortexcli/cortexcli-log/logs/"
-         if [ -d "$HOME/.cortexcli/logs/" ]; then
-            echo "✅ Log directory exists."
-            ls -la "$HOME/.cortexcli/logs/"
-         else
-            echo "❌ Log directory does not exist."
-            # Check the parent directory to see what IS there
-            ls -la "$HOME/.cortexcli" || echo "Parent .cortexcli directory also missing."
-         fi
-
       - name: Scan Image with Cortex
         run: |
           sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" --log-level DEBUG image scan vulnerables/web-dvwa:latest > scan-results.json 2>&1 || true
