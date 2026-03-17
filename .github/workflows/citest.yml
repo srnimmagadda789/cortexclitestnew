@@ -43,7 +43,7 @@ jobs:
 
       - name: Scan Image with Cortex
         run: |
-          sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" --log-level DEBUG image scan vulnerables/web-dvwa:latest
+          sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" --log-level DEBUG image scan vulnerables/web-dvwa:latest > scan-results.json 2>&1 || true
       - name: Display Cortex Logs
         if: always()
         run: |
