@@ -61,6 +61,7 @@ jobs:
           --timeout 600 \
           --name $IMAGE_NAME \
           $IMAGE_NAME)
+          failOnStandardError: true
         image_id="$(echo $results | grep -oP '(?<="image_id":")[^"]*')"
 
         if [[ -z "$image_id" ]]; then
