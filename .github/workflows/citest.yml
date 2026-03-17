@@ -75,5 +75,6 @@ jobs:
           path: |
             scan-results.json
             debug-logs-upload/
+            /home/runner/.cortexcli/cortexcli-log/logs/cortexcli-*.log
           if-no-files-found: warn
           compression-level: 6
