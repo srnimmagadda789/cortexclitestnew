@@ -31,15 +31,15 @@ jobs:
       # --- NEW DEBUG STEP ---
       - name: Debug Cortex Path and Files
         run: |
-          echo "--- Current Working Directory ---"
-          pwd
-          echo "--- Searching for cortexcli binary location ---"
-          find . -name "cortexcli" -type f
-          echo "--- Checking permissions and file type ---"
-          ls -la cortexcli || echo "cortexcli not found in root"
-          file cortexcli || echo "Cannot determine file type"
-          echo "--- Listing everything in the workspace for context ---"
-          ls -R . > debug_files.txt
+         echo "Checking path: $HOME/.cortexcli/cortexcli-log"
+         if [ -d "$HOME/.cortexcli/cortexcli-log" ]; then
+            echo "✅ Log directory exists."
+            ls -la "$HOME/.cortexcli/cortexcli-log"
+         else
+            echo "❌ Log directory does not exist."
+            # Check the parent directory to see what IS there
+            ls -la "$HOME/.cortexcli" || echo "Parent .cortexcli directory also missing."
+         fi
 
       - name: Scan Image with Cortex
         run: |
@@ -63,5 +63,4 @@ jobs:
           name: security-scan-report
           path: |
             scan-results.json
-            debug_files.txt
-            ~/./cortexcli/cortexcli-log/
+            $HOME/.cortexcli/cortexcli-log
