@@ -60,7 +60,6 @@ jobs:
           image scan \
           --timeout 600 \
           --name $IMAGE_NAME \
-          --output-format json \
           $IMAGE_NAME)
         image_id="$(echo $results | grep -oP '(?<="image_id":")[^"]*')"
 
