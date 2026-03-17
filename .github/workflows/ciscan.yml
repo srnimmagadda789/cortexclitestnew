@@ -128,3 +128,8 @@ jobs:
       with:
         name: image-scan-results
         path: "image-${{ env.OUTPUT_FILE }}"
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: cortexcli-debug-logs
+        path: ~/.cortexcli/cortexcli-log/
