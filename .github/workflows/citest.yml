@@ -43,26 +43,30 @@ jobs:
 
       - name: Scan Image with Cortex
         run: |
-          sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" image scan vulnerables/web-dvwa:latest
+          sudo ./cortexcli --api-base-url "${CORTEX_API_URL}" --api-key-id "${CORTEX_API_KEY_ID}" --api-key "${CORTEX_API_KEY}" image scan vulnerables/web-dvwa:latest > scan-results.json 2>&1 || true
       - name: Display Cortex Logs
         if: always()
         run: |
           echo "--- Checking for Cortex CLI logs ---"
-          if [ -d "$HOME/.cortexcli/cortexcli-log/logs/cortexcli-1905081474.log" ]; then
+          if [ -d "$HOME/.cortexcli/logs/" ]; then
             echo "Logs found! Printing all files in directory:"
             # This finds all files in the log dir and prints their contents
-            find "$HOME/.cortexcli/cortexcli-log/logs/cortexcli-1905081474.log" -type f -exec echo "FILE: {}" \; -exec cat {} \;
+            find "$HOME/.cortexcli/logs/" -type f -exec echo "FILE: {}" \; -exec cat {} \;
           else
             echo "No log directory found at ~/.cortexcli/cortexcli-log/logs/"
           fi
       - name : Prepare logs for Upload
         if: always()
         run: |
-          mkdir -p ./debug-logs
+          mkdir -p ./debug-logs-upload
           if [ -d "$HOME/.cortexcli/cortexcli-log" ]; then
-            cp -r $HOME/.cortexcli/cortexcli-log/* ./debug-logs/
+            cp -r $HOME/.cortexcli/cortexcli-log/* ./debug-logs-upload/ || true
           fi
-          sudo cp -r /root/.cortexcli/cortexcli-log/* ./debug-logs/ 2>/dev/null || true
+          if sudo [ -d "/root/.cortexcli/cortexcli-log" ]; then
+             sudo cp -r /root/.cortexcli/cortexcli-log/* ./debug-logs-upload/ || true
+             sudo chmod -R 777 ./debug-logs-upload/
+          fi
+          ls -R ./debug-logs-upload/
       - name: Upload Scan Results
         if: always() # Upload even if the scan fails
         uses: actions/upload-artifact@v4
@@ -70,6 +74,6 @@ jobs:
           name: cortex-debug-bundle
           path: |
             scan-results.json
-            debug-logs/
+            debug-logs-upload/
           if-no-files-found: warn
           compression-level: 6
