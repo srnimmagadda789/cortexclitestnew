@@ -7,6 +7,11 @@ on:
 jobs:
   scan-image:
     runs-on: ubuntu-latest
+    environment: Cortex
+    env:
+      CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
+      CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
+      CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
 
     steps:
       - name: Checkout code
@@ -24,10 +29,6 @@ jobs:
          ./cortexcli --version
 
       - name: Scan Image with Cortex
-        env:
-          CORTEX_API_KEY: ${{ secrets.CORTEX_API_KEY }}
-          CORTEX_API_KEY_ID: ${{ secrets.CORTEX_API_KEY_ID }}
-          CORTEX_API_URL: ${{ secrets.CORTEX_API_URL }}
         run: |
          sudo  ./cortexcli --api-base-url $(CORTEX_API_URL) --log-level DEBUG --api-key-id $(CORTEX_API_KEY_ID) --api-key $(CORTEX_API_KEY) image scan vulnerables/web-dvwa:latest
 
