@@ -60,7 +60,9 @@ jobs:
         if: always() # Upload even if the scan fails
         uses: actions/upload-artifact@v4
         with:
-          name: security-scan-report
+          name: cortex-debug-bundle
           path: |
             scan-results.json
-            $HOME/.cortexcli/logs/
+            $HOME/.cortexcli/cortexcli-log/logs/cortexcli-1905081474.log
+          if-no-files-found: warn
+          compression-level: 6
