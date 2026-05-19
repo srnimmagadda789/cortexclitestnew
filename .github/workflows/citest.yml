@@ -17,7 +17,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Pull DVWA Image
+      - name: Pull DVWA Image //test
         run: docker pull vulnerables/web-dvwa:latest
 
       - name: Download cortexcli
