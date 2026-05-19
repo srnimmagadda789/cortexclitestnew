@@ -21,7 +21,7 @@ jobs:
       OUTPUT_FILE: ${{ vars.OUTPUT_FILE || 'scan-results.json' }}
 
     steps:
-    # Initial Setup
+    # Initial Setup test
     - name: Checkout
       uses: actions/checkout@ff7abcd0c3c05ccf6adc123a8cd1fd4fb30fb493 # v5
 
